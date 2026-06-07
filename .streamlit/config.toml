@@ -1,0 +1,8 @@
+[theme]
+# 일반 배포용으로 앱 테마를 '다크'로 고정한다(OS/환경에 따라 달라지지 않게).
+# 정당 연상색(빨강/파랑) 배제 — 강조색은 다크에서 잘 보이는 밝은 teal.
+base = "dark"
+primaryColor = "#2DD4BF"             # teal-400, 밝은 액센트
+backgroundColor = "#0F172A"          # slate-900, 메인 배경
+secondaryBackgroundColor = "#1E293B" # slate-800, 사이드바·보조 영역
+textColor = "#E2E8F0"                # slate-200, 본문 (배경 대비 ~13:1)

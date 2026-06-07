@@ -6,6 +6,9 @@ import branca.colormap as bcm
 from folium import CircleMarker
 from streamlit_folium import st_folium
 from pathlib import Path
+import html as _html
+import json
+import streamlit.components.v1 as components
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 상수 / 데이터 출처
@@ -35,6 +38,18 @@ SHORTAGE_COLORS = ["#0F766E", "#14B8A6", "#2DD4BF", "#5EEAD4", "#99F6E4"]
 # 흔들리므로 상수로 못박는다. 현재 최댓값은 송파구의 14.
 # → 향후 14보다 큰 값이 유입되면 이 상수를 수동으로 상향 조정할 것.
 SHORTAGE_SCALE_MAX = 14
+
+# ── 공유/SNS 메타 설정 ────────────────────────────────────────────────────────
+# 배포 후 채우면 더 정확해진다(미설정이어도 동작):
+#  · SITE_URL    : 공개 https URL → og:url, 공유 버튼의 기본 URL
+#  · OG_IMAGE_URL: 1200×630 절대 URL → 채우면 twitter:card가 summary_large_image로 자동 전환
+SITE_URL = "https://bw-korea.streamlit.app"
+OG_IMAGE_URL = ""
+OG_TITLE = "BallotWatch Korea — 6·3 지방선거 투표용지 부족 현황"
+OG_DESCRIPTION = (
+    "전국 14,288개 투표소 중 50개소 용지 부족, 22개소 투표 일시 중단. "
+    "공개 데이터로 분석한 비당파적 오픈소스 대시보드."
+)
 
 BASE_DIR = Path(__file__).parent
 
@@ -111,6 +126,12 @@ TEXTS = {
         "how_title": "어떻게 전개됐나",
         "how_desc": "본투표일부터 선관위 사과·진상규명위 구성까지의 경과와, 선관위가 밝힌 부족 발생 원인입니다.",
         "sources_desc": "위 내용을 뒷받침하는 국내·국제 보도와 1차 출처입니다. 외부 기사는 링크와 짧은 요약만 제공합니다.",
+        "share_title": "공유하기",
+        "share_copy": "링크 복사",
+        "share_copied": "복사됨!",
+        "share_x": "X(트위터)",
+        "share_fb": "페이스북",
+        "share_text": "BallotWatch Korea — 6·3 지방선거 투표용지 부족 현황",
         "about": """이 프로젝트는 부정선거, 선거의 정당성, 정당 간 유불리에 대해 어떤 주장도 하지 않으며,
 공식 데이터로 공개 보도된 사실만 기록합니다.
 
@@ -194,6 +215,12 @@ BallotWatch Korea는 2026년 6·3 지방선거 당일 발생한 투표용지 부
         "how_title": "How it unfolded",
         "how_desc": "From election day to the NEC's apology and fact-finding committee — and the cause the NEC gave for the shortage.",
         "sources_desc": "Domestic and international coverage and the primary source behind the above. External articles are provided as links with short summaries only.",
+        "share_title": "Share",
+        "share_copy": "Copy link",
+        "share_copied": "Copied!",
+        "share_x": "X (Twitter)",
+        "share_fb": "Facebook",
+        "share_text": "BallotWatch Korea — Jun 3 local election ballot shortage",
         "about": """This project makes no claim about election fraud, the legitimacy of the
 election, or partisan advantage. It records only facts publicly reported from
 official data.
@@ -211,6 +238,57 @@ voter access.
   count of per-station delay times or of voters who gave up without voting.""",
     },
 }
+
+# ─────────────────────────────────────────────────────────────────────────────
+# OG/Twitter 메타태그 주입
+# ─────────────────────────────────────────────────────────────────────────────
+# [한계] SNS 크롤러(카톡/트위터/페북)는 JS를 실행하지 않고 서버가 내려주는 정적
+# index.html의 <head>만 읽는다. st.markdown/components.html 주입은 미리보기에 잡히지
+# 않으므로, streamlit 패키지의 static/index.html <head>에 직접 메타태그를 끼워 넣는다.
+#  · idempotent(마커로 중복 방지), 쓰기 권한 없으면 조용히 통과.
+#  · site-packages 파일을 수정 → 재배포/재설치 시 사라지며, 크롤러가 오기 전에 실제
+#    방문 1회(warm-up)가 있어야 반영된다. 플랫폼별 OG 캐시는 각 디버거로 갱신.
+def inject_og_tags():
+    idx = Path(st.__file__).parent / "static" / "index.html"
+    try:
+        doc = idx.read_text(encoding="utf-8")
+    except OSError:
+        return
+    if "<!-- bw-og -->" in doc:  # 이미 주입됨
+        return
+
+    def esc(s: str) -> str:
+        return _html.escape(s, quote=True)
+
+    # 이미지가 있으면 큰 카드, 없으면 텍스트 카드(summary)
+    twitter_card = "summary_large_image" if OG_IMAGE_URL else "summary"
+    tags = [
+        "<!-- bw-og -->",
+        '<meta property="og:type" content="website" />',
+        '<meta property="og:locale" content="ko_KR" />',
+        f'<meta property="og:title" content="{esc(OG_TITLE)}" />',
+        f'<meta property="og:description" content="{esc(OG_DESCRIPTION)}" />',
+        f'<meta name="twitter:card" content="{twitter_card}" />',
+        f'<meta name="twitter:title" content="{esc(OG_TITLE)}" />',
+        f'<meta name="twitter:description" content="{esc(OG_DESCRIPTION)}" />',
+    ]
+    if SITE_URL:
+        tags.append(f'<meta property="og:url" content="{esc(SITE_URL)}" />')
+    if OG_IMAGE_URL:
+        tags.append(f'<meta property="og:image" content="{esc(OG_IMAGE_URL)}" />')
+        tags.append(f'<meta name="twitter:image" content="{esc(OG_IMAGE_URL)}" />')
+
+    block = "\n    " + "\n    ".join(tags) + "\n  "
+    doc = doc.replace("</head>", block + "</head>", 1)
+    # 크롤러가 og:title 외에 <title>도 보므로 함께 교체
+    doc = doc.replace("<title>Streamlit</title>", f"<title>{esc(OG_TITLE)}</title>", 1)
+    try:
+        idx.write_text(doc, encoding="utf-8")
+    except OSError:
+        pass
+
+
+inject_og_tags()
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 페이지 설정 — 반드시 첫 Streamlit 호출이어야 함
@@ -553,6 +631,59 @@ def render_toc():
     st.markdown(f'<nav class="bw-toc">{links}</nav>', unsafe_allow_html=True)
 
 
+def render_share():
+    """공유 영역 — 링크 복사 / X(트위터) / 페이스북. teal 통일.
+    iframe(components.html)이라 앱 CSS 변수를 못 쓰므로 teal 색을 인라인으로 둔다.
+    URL은 SITE_URL(설정 시) → 부모창 위치 → referrer 순으로 결정한다."""
+    site_url = json.dumps(SITE_URL)
+    share_text = json.dumps(t["share_text"])
+    label_copy = json.dumps(t["share_copy"])
+    label_copied = json.dumps(t["share_copied"])
+    btn_base = (
+        "padding:6px 14px;border-radius:999px;font-size:0.85rem;font-weight:600;"
+        "font-family:'Pretendard','Noto Sans KR',system-ui,sans-serif;"
+        "cursor:pointer;text-decoration:none;display:inline-block;line-height:1.4;"
+    )
+    solid = f"{btn_base}background:#2DD4BF;color:#0F172A;border:none;"
+    outline = f"{btn_base}background:transparent;color:#2DD4BF;border:1px solid #2DD4BF;"
+    components.html(
+        f"""
+        <div style="font-family:'Pretendard','Noto Sans KR',system-ui,sans-serif;">
+          <div style="font-size:0.72rem;font-weight:700;letter-spacing:.08em;
+                      text-transform:uppercase;color:#2DD4BF;margin-bottom:8px;">
+            {_html.escape(t['share_title'])}
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;">
+            <button id="bwCopy" style="{solid}"></button>
+            <a id="bwX" href="#" target="_blank" rel="noopener" style="{outline}">{_html.escape(t['share_x'])}</a>
+            <a id="bwFb" href="#" target="_blank" rel="noopener" style="{outline}">{_html.escape(t['share_fb'])}</a>
+          </div>
+        </div>
+        <script>
+          let url = {site_url};
+          if (!url) {{ try {{ url = window.parent.location.href; }} catch (e) {{ url = document.referrer || ""; }} }}
+          if (!url) url = window.location.href;
+          const text = {share_text};
+          const enc = encodeURIComponent;
+          document.getElementById("bwX").href =
+            "https://twitter.com/intent/tweet?text=" + enc(text) + "&url=" + enc(url);
+          document.getElementById("bwFb").href =
+            "https://www.facebook.com/sharer/sharer.php?u=" + enc(url);
+          const btn = document.getElementById("bwCopy");
+          btn.textContent = {label_copy};
+          btn.addEventListener("click", async () => {{
+            try {{
+              await navigator.clipboard.writeText(url);
+              btn.textContent = {label_copied};
+              setTimeout(() => {{ btn.textContent = {label_copy}; }}, 1500);
+            }} catch (e) {{ window.prompt("URL", url); }}
+          }});
+        </script>
+        """,
+        height=78,
+    )
+
+
 def render_metrics():
     st.markdown(f'<div class="bw-kicker">{t["kicker_glance"]}</div>', unsafe_allow_html=True)
     col1, col2, col3 = st.columns(3)
@@ -713,6 +844,7 @@ def render_about_faq():
 # ─────────────────────────────────────────────────────────────────────────────
 render_hero()
 render_toc()
+render_share()  # 상단 공유 영역
 render_metrics()
 st.divider()
 render_map()       # 어디서
@@ -726,6 +858,8 @@ st.divider()
 render_raw_data()  # 원본 데이터 (expander)
 st.divider()
 render_about_faq()  # 소개 + FAQ (expander)
+st.divider()
+render_share()  # 하단 공유 영역
 
 # 상시 노출 푸터 (짧은 출처 + 중립성 한 줄) — 상세 버전은 About 참조
 st.divider()

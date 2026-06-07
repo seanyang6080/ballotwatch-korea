@@ -1,0 +1,33 @@
+# ── Python ──────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# ── 가상환경 ─────────────────────────────────────────────
+.venv/
+venv/
+env/
+ENV/
+
+# ── 테스트/캐시 ──────────────────────────────────────────
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# ── Streamlit ───────────────────────────────────────────
+# secrets.toml만 제외(민감정보). config.toml은 테마 설정이라 커밋에 포함.
+.streamlit/secrets.toml
+
+# ── OS / 에디터 ──────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp

@@ -34,6 +34,26 @@ streamlit run app.py
 - 카드 배경/보더는 **테마 무관 반투명 중립값**(`rgba(128,128,128,…)`)을 쓴다.
 - 색이 꼭 필요한 요소(뱃지)는 자체 배경을 가진 완결형(solid teal + 흰 글자)으로 만든다.
 
+## 공유 / OG 미리보기 (SNS 카드)
+
+SNS 크롤러(카톡·트위터·페북)는 **JS를 실행하지 않고** 서버가 내려주는 정적
+`index.html`의 `<head>`만 읽는다. 그래서 `st.markdown`/`components.html`로 넣은
+메타태그는 **미리보기에 잡히지 않는다**. 유일하게 동작하는 방법은 streamlit 패키지의
+`static/index.html` `<head>`에 직접 메타를 끼워 넣는 것 — `app.py`의 `inject_og_tags()`가
+시작 시 idempotent하게 처리한다.
+
+- 더 정확히 하려면 `app.py` 상단 상수를 채운다: `SITE_URL`(공개 https URL),
+  `OG_IMAGE_URL`(1200×630 절대 URL → 설정 시 `twitter:card`가 `summary_large_image`로 전환).
+- **한계**: site-packages 파일을 수정하므로 재배포/재설치 시 사라진다(콜드스타트마다
+  재주입되지만 **크롤러가 오기 전 실제 방문 1회**가 필요). 플랫폼별 OG 캐시는 각 디버거로
+  갱신(페북 Sharing Debugger / 트위터 Card Validator / 카카오 재스크랩).
+- 바이럴이 중요하면 리버스 프록시·Cloudflare Worker·정적 랜딩페이지에서 OG를 제공하는
+  편이 더 견고하다.
+
+공유 버튼(`render_share()`)은 클라이언트에서 완전히 동작한다: 링크 복사 / X(트위터) /
+페이스북. 카카오 정식 버튼은 Kakao JS SDK 앱키가 필요해 제외했고, 링크 복사로 대체한다
+(카톡은 OG가 잡히면 자동 미리보기).
+
 ## 색상 원칙
 
 정당 연상색(빨강·파랑·주황) 사용 금지. 중립적 딥 틸(teal) 단색을 액센트로 사용한다.

@@ -145,6 +145,38 @@ BallotWatch Korea는 2026년 6·3 지방선거 당일 발생한 투표용지 부
 · 검증: 공개 데이터와 공개 소스코드로 누구나 재현·검증할 수 있습니다.
 · 한계: 선관위가 구 단위까지만 공개해 개별 투표소 분석은 불가능하며,
   투표소별 지연 시간과 투표를 포기한 유권자 수에 대한 공식 집계는 존재하지 않습니다.""",
+        "nav_learn": "알아보기",
+        "learn_kicker": "알아보기 / LEARN",
+        "learn_title": "참정권 알아보기",
+        "learn_intro": "아래는 선거권에 대한 교육 목적의 일반 정보로, 헌법·법령 등 공식 자료에 근거합니다. 특정 정당이나 이번 사건에 대한 평가가 아닙니다.",
+        "learn_sources": "출처: 대한민국 헌법 · 국가법령정보센터 · 국가기록원",
+        # (제목, 본문) — 본문은 그대로, 불릿은 한 줄씩 보이도록 마크다운 하드 개행 사용
+        "learn_items": [
+            (
+                "참정권과 선거권",
+                "참정권은 국민이 국가 정치에 참여할 권리이고, 그 핵심이 선거권입니다. "
+                "헌법 제24조는 \"모든 국민은 법률이 정하는 바에 의하여 선거권을 가진다\"고 "
+                "규정합니다. 헌법 제41조 제1항과 제67조 제1항은 국회의원·대통령 선거에서 "
+                "보통·평등·직접·비밀선거의 원칙을 보장합니다.\n\n"
+                "· 보통선거: 일정 연령 이상이면 재산·성별·학력과 무관하게 누구나  \n"
+                "· 평등선거: 모든 유권자에게 1인 1표, 표의 가치가 평등  \n"
+                "· 직접선거: 유권자가 대표자를 직접 선출  \n"
+                "· 비밀선거: 누구에게 투표했는지 공개되지 않음",
+            ),
+            (
+                "선거권 연령의 변천",
+                "· 1948년 제헌 국회의원 선거: 만 21세  \n"
+                "· 1960년: 만 20세로 하향  \n"
+                "· 2005년: 만 19세로 하향  \n"
+                "· 2019년 공직선거법 개정 → 2020년 제21대 총선부터 만 18세 적용",
+            ),
+            (
+                "투표는 어떻게 진행되나",
+                "유권자는 사전투표와 선거일 본투표 중 선택해 투표할 수 있습니다. 투표용지는 "
+                "선거 전에 인쇄되어 각 투표소로 배부되며, 투표소별로 필요한 수량을 적절히 "
+                "준비·배분하는 것이 원활한 투표 진행의 전제입니다.",
+            ),
+        ],
     },
     "en": {
         "language_label": "Language",
@@ -236,6 +268,41 @@ voter access.
 · Verifiability: reproducible and verifiable by anyone from public data and open-source code
 · Limitations: Data is only public at the district level; there is no official
   count of per-station delay times or of voters who gave up without voting.""",
+        "nav_learn": "Learn",
+        "learn_kicker": "알아보기 / LEARN",
+        "learn_title": "Understanding the Right to Vote",
+        "learn_intro": "The following is general, educational information about the right to vote, based on official sources such as the Constitution and statutes. It is not an assessment of any political party or of this incident.",
+        "learn_sources": "Sources: Constitution of the Republic of Korea · Korea Law Information Center · National Archives of Korea",
+        # (title, body) — faithful, neutral translation; no added interpretation
+        "learn_items": [
+            (
+                "Suffrage and the right to vote",
+                "Suffrage is the right of citizens to participate in the politics of the "
+                "state, and its core is the right to vote. Article 24 of the Constitution "
+                "provides that \"All citizens shall have the right to vote under the "
+                "conditions as prescribed by Act.\" Article 41(1) and Article 67(1) of the "
+                "Constitution guarantee the principles of universal, equal, direct, and "
+                "secret elections for National Assembly and presidential elections.\n\n"
+                "· Universal suffrage: anyone above a certain age, regardless of property, sex, or education  \n"
+                "· Equal suffrage: one vote per voter, with each vote of equal weight  \n"
+                "· Direct election: voters elect their representatives directly  \n"
+                "· Secret ballot: whom a person voted for is not disclosed",
+            ),
+            (
+                "Changes in the voting age",
+                "· 1948 first National Assembly election: age 21  \n"
+                "· 1960: lowered to age 20  \n"
+                "· 2005: lowered to age 19  \n"
+                "· 2019 amendment to the Public Official Election Act → age 18 applied from the 21st general election in 2020",
+            ),
+            (
+                "How voting is conducted",
+                "Voters may choose to vote either during early voting or in the main vote "
+                "on election day. Ballots are printed before the election and distributed to "
+                "each polling station, and appropriately preparing and allocating the "
+                "quantity needed at each station is a prerequisite for voting to proceed smoothly.",
+            ),
+        ],
     },
 }
 
@@ -626,6 +693,7 @@ def render_toc():
         ("evidence", t["nav_evidence"]),
         ("data", t["nav_data"]),
         ("about", t["nav_about"]),
+        ("learn", t["nav_learn"]),
     ]
     links = " ".join(f'<a href="#{a}">{label}</a>' for a, label in items)
     st.markdown(f'<nav class="bw-toc">{links}</nav>', unsafe_allow_html=True)
@@ -839,6 +907,16 @@ def render_about_faq():
             st.markdown(f"**{_q}**")
             st.markdown(_a)
 
+
+def render_learn():
+    """푸터 직전 교육 섹션 — 사건 분석과 분리된 선거권 일반 정보 (중립·교육 목적)."""
+    section_header("learn", t["learn_kicker"], t["learn_title"])
+    st.caption(t["learn_intro"])
+    for _title, _body in t["learn_items"]:
+        with st.expander(_title, expanded=False):
+            st.markdown(_body)
+    st.caption(t["learn_sources"])
+
 # ─────────────────────────────────────────────────────────────────────────────
 # 페이지 렌더: 위→아래 내러티브 (무슨 일 → 어디서 → 얼마나 → 어떻게 전개 → 근거)
 # ─────────────────────────────────────────────────────────────────────────────
@@ -858,6 +936,8 @@ st.divider()
 render_raw_data()  # 원본 데이터 (expander)
 st.divider()
 render_about_faq()  # 소개 + FAQ (expander)
+st.divider()
+render_learn()      # 참정권 알아보기 (교육 섹션 — 사건 분석과 분리)
 st.divider()
 render_share()  # 하단 공유 영역
 
